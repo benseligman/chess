@@ -19,7 +19,7 @@ class Stepper < Piece
     possible_moves = []
     self.move_deltas.each do |delta|
       new_position = [delta[0] + i, delta[1] + j]
-      possible_moves << new_position if @board.valid?(new_position, color)
+      possible_moves << new_position
     end
 
     possible_moves

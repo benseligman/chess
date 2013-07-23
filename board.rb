@@ -11,7 +11,7 @@ class Board
 
   def []=(i, j, piece)
     @rows[i][j] = piece
-    piece.position = [i, j]
+    piece.position = [i, j] unless self.empty?(i, j)
   end
 
   def empty?(i, j)
@@ -21,6 +21,17 @@ class Board
   def valid?(move, color)
     return false unless move.all? { |el| el.between?(0, 7) }
     (empty?(*move) || (self[*move].color != color)) ? true : false
+  end
+
+  def move(origin, destination)
+    piece = self[*origin]
+    available_moves = piece.possible_moves
+    available_moves.select! { |move| self.valid?(destination, piece.color) }
+    if available_moves.include? (destination)
+      self[*destination] = piece
+      self[*origin] = " "
+    end
+    #TODO: harden code
   end
 
   def to_s
