@@ -1,4 +1,4 @@
-require "./piece"
+load "./piece.rb"
 
 class Board
   def initialize
@@ -15,19 +15,20 @@ class Board
   end
 
   def empty?(i, j)
+    return false unless on_board?(i, j)
     !self[i, j].is_a?(Piece)
   end
 
-  def valid?(move, color)
-    return false unless move.all? { |el| el.between?(0, 7) }
-    (empty?(*move) || (self[*move].color != color)) ? true : false
+  def on_board?(i, j)
+    pos = [i, j]
+    pos.all? { |el| el.between?(0, 7) }
   end
 
   def move(origin, destination)
     piece = self[*origin]
-    available_moves = piece.possible_moves
-    available_moves.select! { |move| self.valid?(destination, piece.color) }
-    if available_moves.include? (destination)
+    possible_moves = piece.possible_moves
+
+    if possible_moves.include? (destination)
       self[*destination] = piece
       self[*origin] = " "
     end
@@ -44,4 +45,8 @@ end
 @@b = Board.new
 @@k = King.new(@@b, :black)
 @@b[0, 0] = @@k
+@@r = Rook.new(@@b, :white)
+@@b[0, 7] = @@r
+
+
 
