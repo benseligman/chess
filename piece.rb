@@ -1,3 +1,4 @@
+#TODO: update to_s methods to use unicode chess chars: http://en.wikipedia.org/wiki/Chess_symbols_in_Unicode
 
 class Piece
   attr_accessor :position
@@ -119,7 +120,8 @@ class Pawn < Stepper
   def take_positions
     take_positions = []
     i, j = @position
-
+    
+    #TODO: fix logic so that it doesn't fail when comparing to an empty square.
     if @board[i + dir, j + 1].color != self.color
       take_positions << [i + dir, j + 1]
     end
