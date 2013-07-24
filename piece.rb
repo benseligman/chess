@@ -10,11 +10,15 @@ class Piece
   end
 
   # TODO: add Board.check and reference here
-  def valid?(move, color)
-    return false unless @board.on_board?(*move)
-    (@board.empty?(*move) || (@board[*move].color != color)) ? true : false
+  def valid?(destination, color)
+    return false unless @board.on_board?(*destination) &&
+      (@board.empty?(*destination) || (@board[*destination].color != color)) #? true : false
+
+    board_copy = self.board.dup
+    board_copy.move!(origin, destination)
+    !board_copy.check?(@color)
   end
-end
+end #end PIECE
 
 class Stepper < Piece
   def possible_moves
@@ -23,7 +27,7 @@ class Stepper < Piece
 
     self.move_deltas.each do |delta|
       candidate = [delta[0] + i, delta[1] + j]
-      possible_moves << new_position if self.valid?(candidate, @color)
+      possible_moves << candidate if self.valid?(candidate, @color)
     end
 
     possible_moves
@@ -91,7 +95,7 @@ class Pawn < Stepper
   end
 
   def possible_moves
-    forward_moves + take_positions
+    forward_moves #+ take_positions
   end
 
   def forward_moves
@@ -117,20 +121,20 @@ class Pawn < Stepper
     (@color == :white) ? i == 6 : i == 1
   end
 
-  def take_positions
-    take_positions = []
-    i, j = @position
-    
-    #TODO: fix logic so that it doesn't fail when comparing to an empty square.
-    if @board[i + dir, j + 1].color != self.color
-      take_positions << [i + dir, j + 1]
-    end
-    if @board[i + dir, j - 1].color != self.color
-      take_positions << [i + dir, j - 1]
-    end
+  # def take_positions
+ #    take_positions = []
+ #    i, j = @position
 
-    take_positions
-  end
+    #TODO: fix logic so that it doesn't fail when comparing to an empty square.
+    # if @board[i + dir, j + 1].color != self.color
+ #      take_positions << [i + dir, j + 1]
+ #    end
+ #    if @board[i + dir, j - 1].color != self.color
+ #      take_positions << [i + dir, j - 1]
+ #    end
+ #
+ #    take_positions
+#  end
 
   def to_s
     "P"
