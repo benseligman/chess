@@ -35,7 +35,7 @@ class Board
 
   def initialize
     @rows = Array.new(8) { Array.new(8) { nil } }
-    self.set_pieces
+    set_pieces
   end
 
   def [](i, j)
@@ -106,7 +106,6 @@ class Board
   def translate_location(location)
     row = ROWS[location[1].to_i]
     col = COLS[location[0]]
-    p [row, col]
     [row, col]
   end
 
@@ -142,13 +141,14 @@ class Board
     end.join("\n--------------------------------\n")
   end
 
-  private
+
 
   def []=(i, j, piece)
     @rows[i][j] = piece
     piece.position = [i, j] unless piece.nil?
   end
 
+  private
   def set_pieces
     power_row = "RHBQKBHR".split("")
 
