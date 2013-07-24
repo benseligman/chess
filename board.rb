@@ -1,6 +1,7 @@
 load "./piece.rb"
+require "./exceptions"
 
-#TODO: Add #check, #checkmate, #populate_board
+
 class Board
   PIECES = {
     "R" => Rook,
@@ -42,12 +43,13 @@ class Board
     @rows[i][j]
   end
 
-  def all_pieces
-    @rows.flatten.compact
+  def []=(i, j, piece)
+    @rows[i][j] = piece
+    piece.position = [i, j] unless piece.nil?
   end
 
   def check?(color)
-    opposing_moves = self.team_possible_moves(opposite_color(color))
+    opposing_moves = team_possible_moves(opposite_color(color))
     opposing_moves.include?(king_position(color))
   end
 
@@ -57,7 +59,7 @@ class Board
 
   def dup
     dupped_board = Board.new
-    self.all_pieces.each do |piece|
+    all_pieces.each do |piece|
       dupped_board[*piece.position] = piece.dup
     end
 
@@ -66,12 +68,7 @@ class Board
 
   def empty?(i, j)
     raise IndexError "Off Board!" unless on_board?(i, j)
-    !self[i, j].is_a?(Piece)
-  end
-
-  def king_position(color)
-    king = self.team_pieces(color).find { |piece| piece.is_a?(King) }
-    king.position
+    self[i, j].nil?
   end
 
   def move(origin, destination)
@@ -82,8 +79,9 @@ class Board
 
     if piece.legal_moves.include?(destination)
       move!(origin, destination)
+    else
+      raise IllegalMoveError.new("Make a legal chess move.")
     end
-    #TODO: harden code
   end
 
   def move!(origin, destination)
@@ -99,71 +97,96 @@ class Board
     pos.all? { |el| el.between?(0, 7) }
   end
 
-  def opposite_color(color)
-    color == :white ? :black : :white
-  end
-
-  def translate_location(location)
-    row = ROWS[location[1].to_i]
-    col = COLS[location[0]]
-    [row, col]
-  end
-
-  def team_legal_moves(color)
-    team_legal_moves = team_pieces(color).map do |piece|
-      piece.legal_moves
-    end
-
-    team_legal_moves.flatten(1)
-  end
-
-  def team_pieces(color)
-    self.all_pieces.select { |piece| piece.color == color }
-  end
-
-  def team_possible_moves(color)
-    team_possible_moves = team_pieces(color).map do |piece|
-      piece.possible_moves
-    end
-
-    team_possible_moves.flatten(1)
+  def square(square)
+    self[*translate_location(square)]
   end
 
   def to_s
-    @rows.map do |row|
+    @rows.each_with_index.map do |row, index|
       row.map do |square|
         if square.nil?
           "   "
         else
           " #{square.to_s} "
         end
-      end.join("|")
-    end.join("\n--------------------------------\n")
+      end.join("|") + "  #{8 - index}"
+    end.join("\n--------------------------------\n") +
+    "\n " + ("a".."h").to_a.join("   ")
   end
 
+  def won?
+    [:white, :black].any? { |team| checkmate?(team) }
+  end
 
+  def over?(color)
+    won? || stalemate?(color)
+  end
 
-  def []=(i, j, piece)
-    @rows[i][j] = piece
-    piece.position = [i, j] unless piece.nil?
+  def stalemate?(color)
+    return false if won?
+    team_legal_moves(color).empty?
   end
 
   private
-  def set_pieces
-    power_row = "RHBQKBHR".split("")
+    def all_pieces
+      @rows.flatten.compact
+    end
 
-    [[0, :black], [7, :white]].each do |row, color|
-      power_row.each_with_index do |piece, col|
-        self[row, col] = PIECES[piece].new(self, color)
+    def king_position(color)
+      king = team_pieces(color).find { |piece| piece.is_a?(King) }
+      king.position
+    end
+
+    def opposite_color(color)
+      color == :white ? :black : :white
+    end
+
+    def set_pieces
+      power_row = "RHBQKBHR".split("")
+
+      [[0, :black], [7, :white]].each do |row, color|
+        power_row.each_with_index do |piece, col|
+          self[row, col] = PIECES[piece].new(self, color)
+        end
+      end
+
+      [[1, :black], [6, :white]].each do |row, color|
+        8.times do |col|
+          self[row, col] = Pawn.new(self, color)
+        end
       end
     end
 
-    [[1, :black], [6, :white]].each do |row, color|
-      8.times do |col|
-        self[row, col] = Pawn.new(self, color)
+    def team_legal_moves(color)
+      team_legal_moves = team_pieces(color).map do |piece|
+        piece.legal_moves
       end
+
+      team_legal_moves.flatten(1)
     end
-  end
+
+    def team_pieces(color)
+      all_pieces.select { |piece| piece.color == color }
+    end
+
+    def team_possible_moves(color)
+      team_possible_moves = team_pieces(color).map do |piece|
+        piece.possible_moves
+      end
+
+      team_possible_moves.flatten(1)
+    end
+
+    def translate_location(location)
+      row = ROWS[location[1].to_i]
+      col = COLS[location[0]]
+      unless row && col
+        raise IllegalMoveError.new("Enter a move in the format ('a-h'), ('1-8').")
+      end
+      [row, col]
+    end
+
+
 end
 
 

@@ -1,7 +1,9 @@
 load "./board.rb"
 load "./player.rb"
+require "./exceptions"
 
 class Game
+  attr_reader :current_player
   def initialize
     @board = Board.new
     self.create_players
@@ -9,14 +11,43 @@ class Game
   end
 
   def play
-    until @board.checkmate?(@current_player)
+    until @board.over?(@current_player)
+      new_turn
+    end
+
+    result
+  end
+
+  def result
+    if @board.stalemate?(@current_player)
+      puts "It's a tie!"
+    elsif @board.checkmate?(:white)
+      puts "BLACK wins!"
+    else
+      puts "WHITE wins!"
+    end
+    puts @board
+  end
+
+  def new_turn
+    begin
       if @current_player == :white
         move = @white_player.make_move
       else
         move = @black_player.make_move
       end
-      @board.move(*move)
+
+      origin, destination = move
+
+      if @board.square(origin).nil? ||
+        @board.square(origin).color != @current_player
+          raise IllegalMoveError.new("Move your own piece, please.")
+      end
+
+      @board.move(origin, destination)
       self.switch_player
+    rescue IllegalMoveError => e
+      puts "Invalid move! #{e.message}"
     end
   end
 

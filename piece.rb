@@ -1,7 +1,5 @@
 require "debugger"
 
-#TODO: update to_s methods to use unicode chess chars: http://en.wikipedia.org/wiki/Chess_symbols_in_Unicode
-
 class Piece
   attr_accessor :position
   attr_reader :color
@@ -11,7 +9,6 @@ class Piece
     @board = board
   end
 
-  # TODO: add Board.check and reference here
   def available_square?(destination, color)
     @board.on_board?(*destination) &&
       (@board.empty?(*destination) || (@board[*destination].color != color))
@@ -26,11 +23,7 @@ class Piece
   def legal_moves
     self.possible_moves.reject { |destination| into_check?(destination) }
   end
-
 end #end PIECE
-
-
-
 
 class Stepper < Piece
   def possible_moves
@@ -44,7 +37,6 @@ class Stepper < Piece
 
     possible_moves
   end
-
 end
 
 class Slider < Piece
