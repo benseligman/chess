@@ -12,9 +12,6 @@ class Piece
     return false unless @board.on_board?(*move)
     (@board.empty?(*move) || (@board[*move].color != color)) ? true : false
   end
-
-
-
 end
 
 class Stepper < Piece
@@ -62,16 +59,67 @@ end
 class Rook < Slider
   def move_deltas
     DIRECTIONS[:horizontal] + DIRECTIONS[:vertical]
-
   end
+end
 
+class Bishop < Slider
+  def move_deltas
+    DIRECTIONS[:diagonal]
+  end
+end
+
+class Queen < Slider
+  def move_deltas
+    DIRECTIONS[:horizontal] + DIRECTIONS[:vertical] + DIRECTIONS[:diagonal]
+  end
 end
 
 class Pawn < Stepper
+  def dir
+    (@color == :white) ? -1 : 1
+  end
 
+  def possible_moves
+    forward_moves + take_positions
+  end
 
-  def move_deltas
-    [[1, 0]]
+  def forward_moves
+    forward_moves =[]
+    i, j = @position
+
+    if @board.empty?(i + dir, j)
+      forward_moves << [i + dir, j]
+    end
+
+    if @board.empty?(i + dir, j) && @board.empty?(i + dir * 2, j) &&
+      at_starting_position?
+      forward_moves << [i + dir * 2, j]
+    end
+
+    forward_moves
+  end
+
+  def at_starting_position?
+    i, j = @position
+    if @color == :white
+      i == 6
+    else
+      i == 1
+    end
+  end
+
+  def take_positions
+    take_positions = []
+    i, j = @position
+
+    if @board[i + dir, j + 1].color != self.color
+      take_positions << [i + dir, j + 1]
+    end
+    if @board[i + dir, j - 1].color != self.color
+      take_positions << [i + dir, j - 1]
+    end
+
+    take_positions
   end
 end
 
