@@ -11,6 +11,28 @@ class Board
     "P" => Pawn
   }
 
+  ROWS = {
+    8 => 0,
+    7 => 1,
+    6 => 2,
+    5 => 3,
+    4 => 4,
+    3 => 5,
+    2 => 6,
+    1 => 7
+  }
+
+  COLS = {
+    'a' => 0,
+    'b' => 1,
+    'c' => 2,
+    'd' => 3,
+    'e' => 4,
+    'f' => 5,
+    'g' => 6,
+    'h' => 7
+  }
+
   def initialize
     @rows = Array.new(8) { Array.new(8) { nil } }
     self.set_pieces
@@ -18,6 +40,19 @@ class Board
 
   def [](i, j)
     @rows[i][j]
+  end
+
+  def all_pieces
+    @rows.flatten.compact
+  end
+
+  def check?(color)
+    opposing_moves = self.team_possible_moves(opposite_color(color))
+    opposing_moves.include?(king_position(color))
+  end
+
+  def checkmate?(color)
+    check?(color) && team_legal_moves(color).empty?
   end
 
   def dup
@@ -34,12 +69,15 @@ class Board
     !self[i, j].is_a?(Piece)
   end
 
-  def on_board?(i, j)
-    pos = [i, j]
-    pos.all? { |el| el.between?(0, 7) }
+  def king_position(color)
+    king = self.team_pieces(color).find { |piece| piece.is_a?(King) }
+    king.position
   end
 
   def move(origin, destination)
+    origin = translate_location(origin)
+    destination = translate_location(destination)
+
     piece = self[*origin]
 
     if piece.legal_moves.include?(destination)
@@ -49,37 +87,47 @@ class Board
   end
 
   def move!(origin, destination)
+
     piece = self[*origin]
 
     self[*destination] = piece
     self[*origin] = nil
   end
 
+  def on_board?(i, j)
+    pos = [i, j]
+    pos.all? { |el| el.between?(0, 7) }
+  end
+
   def opposite_color(color)
     color == :white ? :black : :white
   end
 
-  def king_position(color)
-    king = self.team_pieces(color).find { |piece| piece.is_a?(King) }
-    king.position
+  def translate_location(location)
+    row = ROWS[location[1].to_i]
+    col = COLS[location[0]]
+    p [row, col]
+    [row, col]
+  end
+
+  def team_legal_moves(color)
+    team_legal_moves = team_pieces(color).map do |piece|
+      piece.legal_moves
+    end
+
+    team_legal_moves.flatten(1)
   end
 
   def team_pieces(color)
     self.all_pieces.select { |piece| piece.color == color }
   end
 
-  def all_pieces
-    @rows.flatten.compact
-  end
+  def team_possible_moves(color)
+    team_possible_moves = team_pieces(color).map do |piece|
+      piece.possible_moves
+    end
 
-  def team_moves(color)
-    team_moves = team_pieces(color).map { |piece| piece.possible_moves }
-    team_moves.flatten(1)
-  end
-
-  def check?(color)
-    opposing_moves = self.team_moves(opposite_color(color))
-    opposing_moves.include?(king_position(color))
+    team_possible_moves.flatten(1)
   end
 
   def to_s
@@ -94,7 +142,7 @@ class Board
     end.join("\n--------------------------------\n")
   end
 
-  #private
+  private
 
   def []=(i, j, piece)
     @rows[i][j] = piece
@@ -116,20 +164,7 @@ class Board
       end
     end
   end
-
 end
-#
-# $b = Board.new
-#
-# $k = King.new($b, :black)
-# $r = Rook.new($b, :white)
-# $p = Pawn.new($b, :white)
-#
-# $b[0, 0] = $k
-# $b[0, 7] = $r
-# $b[6, 0] = $p
-#
-# p $b.team_moves(:black)
 
 
 

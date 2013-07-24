@@ -24,9 +24,7 @@ class Piece
   end
 
   def legal_moves
-    l = self.possible_moves.reject { |destination| into_check?(destination) }
-    p l
-    l
+    self.possible_moves.reject { |destination| into_check?(destination) }
   end
 
 end #end PIECE
@@ -104,8 +102,8 @@ class Queen < Slider
   end
 end
 
-class Pawn < Stepper
-  def dir
+class Pawn
+  def color_dir
     (@color == :white) ? -1 : 1
   end
 
@@ -117,16 +115,16 @@ class Pawn < Stepper
     forward_moves =[]
     i, j = @position
 
-    if @board.empty?(i + dir, j)
-      forward_moves << [i + dir, j]
+    if @board.empty?(i + color_dir, j)
+      forward_moves << [i + color_dir, j]
     end
 
     # Move forward two. Circle back.
-    # if @board.empty?(i + dir, j) &&
-#       @board.empty?(i + dir * 2, j) &&
-#       at_starting_position?
-#         forward_moves << [i + dir * 2, j]
-#     end
+    if @board.empty?(i + color_dir, j) &&
+      @board.empty?(i + color_dir * 2, j) &&
+      at_starting_position?
+        forward_moves << [i + color_dir * 2, j]
+    end
 
     forward_moves
   end
@@ -139,8 +137,8 @@ class Pawn < Stepper
   def attack_positions
     i, j = @position
     attack_positions = [
-      [i + self.dir, j + 1],
-      [i + self.dir, j - 1]
+      [i + self.color_dir, j + 1],
+      [i + self.color_dir, j - 1]
     ]
 
     attack_positions.reject do |position|
