@@ -1,3 +1,5 @@
+require "debugger"
+
 #TODO: update to_s methods to use unicode chess chars: http://en.wikipedia.org/wiki/Chess_symbols_in_Unicode
 
 class Piece
@@ -10,15 +12,27 @@ class Piece
   end
 
   # TODO: add Board.check and reference here
-  def valid?(destination, color)
-    return false unless @board.on_board?(*destination) &&
-      (@board.empty?(*destination) || (@board[*destination].color != color)) #? true : false
-
-    board_copy = self.board.dup
-    board_copy.move!(origin, destination)
-    !board_copy.check?(@color)
+  def available_square?(destination, color)
+    @board.on_board?(*destination) &&
+      (@board.empty?(*destination) || (@board[*destination].color != color))
   end
+
+  def into_check?(destination)
+    board_copy = @board.dup
+    board_copy.move!(@position, destination)
+    board_copy.check?(@color)
+  end
+
+  def legal_moves
+    l = self.possible_moves.reject { |destination| into_check?(destination) }
+    p l
+    l
+  end
+
 end #end PIECE
+
+
+
 
 class Stepper < Piece
   def possible_moves
@@ -27,11 +41,12 @@ class Stepper < Piece
 
     self.move_deltas.each do |delta|
       candidate = [delta[0] + i, delta[1] + j]
-      possible_moves << candidate if self.valid?(candidate, @color)
+      possible_moves << candidate if self.available_square?(candidate, @color)
     end
 
     possible_moves
   end
+
 end
 
 class Slider < Piece
@@ -49,7 +64,7 @@ class Slider < Piece
 
       loop do
         candidate = [candidate[0] + delta_i, candidate[1] + delta_j]
-        possible_moves << candidate if self.valid?(candidate, @color)
+        possible_moves << candidate if self.available_square?(candidate, @color)
 
         break unless @board.on_board?(*candidate) && @board.empty?(*candidate)
       end
@@ -65,7 +80,7 @@ class Rook < Slider
   end
 
   def to_s
-    "R"
+    (@color == :white) ? "\u2656" : "\u265C"
   end
 end
 
@@ -75,7 +90,7 @@ class Bishop < Slider
   end
 
   def to_s
-    "B"
+    (@color == :white) ? "\u2657" : "\u265D"
   end
 end
 
@@ -85,7 +100,7 @@ class Queen < Slider
   end
 
   def to_s
-    "Q"
+    (@color == :white) ? "\u2655" : "\u265B"
   end
 end
 
@@ -95,7 +110,7 @@ class Pawn < Stepper
   end
 
   def possible_moves
-    forward_moves #+ take_positions
+    forward_moves + attack_positions
   end
 
   def forward_moves
@@ -121,23 +136,20 @@ class Pawn < Stepper
     (@color == :white) ? i == 6 : i == 1
   end
 
-  # def take_positions
- #    take_positions = []
- #    i, j = @position
+  def attack_positions
+    i, j = @position
+    attack_positions = [
+      [i + self.dir, j + 1],
+      [i + self.dir, j - 1]
+    ]
 
-    #TODO: fix logic so that it doesn't fail when comparing to an empty square.
-    # if @board[i + dir, j + 1].color != self.color
- #      take_positions << [i + dir, j + 1]
- #    end
- #    if @board[i + dir, j - 1].color != self.color
- #      take_positions << [i + dir, j - 1]
- #    end
- #
- #    take_positions
-#  end
+    attack_positions.reject do |position|
+      @board[*position].nil? || @board[*position].color == @color
+    end
+ end
 
   def to_s
-    "P"
+    (@color == :white) ? "\u2659" : "\u265F"
   end
 end # END PAWN
 
@@ -157,7 +169,7 @@ class King < Stepper
   end
 
   def to_s
-    "K"
+    (@color == :white) ? "\u2654" : "\u265A"
   end
 end # END KING
 
@@ -176,6 +188,6 @@ class Knight < Stepper
   end
 
   def to_s
-    "H"
+    (@color == :white) ? "\u2658" : "\u265E"
   end
 end

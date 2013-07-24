@@ -2,8 +2,18 @@ load "./piece.rb"
 
 #TODO: Add #check, #checkmate, #populate_board
 class Board
+  PIECES = {
+    "R" => Rook,
+    "H" => Knight,
+    "B" => Bishop,
+    "Q" => Queen,
+    "K" => King,
+    "P" => Pawn
+  }
+
   def initialize
     @rows = Array.new(8) { Array.new(8) { nil } }
+    self.set_pieces
   end
 
   def [](i, j)
@@ -31,9 +41,8 @@ class Board
 
   def move(origin, destination)
     piece = self[*origin]
-    possible_moves = piece.possible_moves
 
-    if possible_moves.include? (destination)
+    if piece.legal_moves.include?(destination)
       move!(origin, destination)
     end
     #TODO: harden code
@@ -75,8 +84,14 @@ class Board
 
   def to_s
     @rows.map do |row|
-      row.join("|")
-    end.join("\n-----------------\n")
+      row.map do |square|
+        if square.nil?
+          "   "
+        else
+          " #{square.to_s} "
+        end
+      end.join("|")
+    end.join("\n--------------------------------\n")
   end
 
   #private
@@ -87,22 +102,34 @@ class Board
   end
 
   def set_pieces
-    self.[0, 0] = Rook.new(self)
+    power_row = "RHBQKBHR".split("")
+
+    [[0, :black], [7, :white]].each do |row, color|
+      power_row.each_with_index do |piece, col|
+        self[row, col] = PIECES[piece].new(self, color)
+      end
+    end
+
+    [[1, :black], [6, :white]].each do |row, color|
+      8.times do |col|
+        self[row, col] = Pawn.new(self, color)
+      end
+    end
   end
 
 end
-
-$b = Board.new
-
-$k = King.new($b, :black)
-$r = Rook.new($b, :white)
-$p = Pawn.new($b, :white)
-
-$b[0, 0] = $k
-$b[0, 7] = $r
-$b[6, 0] = $p
-
-p $b.team_moves(:black)
+#
+# $b = Board.new
+#
+# $k = King.new($b, :black)
+# $r = Rook.new($b, :white)
+# $p = Pawn.new($b, :white)
+#
+# $b[0, 0] = $k
+# $b[0, 7] = $r
+# $b[6, 0] = $p
+#
+# p $b.team_moves(:black)
 
 
 
