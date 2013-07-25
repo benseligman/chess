@@ -1,4 +1,3 @@
-require "debugger"
 
 class Piece
   attr_accessor :position
@@ -23,15 +22,27 @@ class Piece
   def legal_moves
     self.possible_moves.reject { |destination| into_check?(destination) }
   end
+
+  private
+
+  def sum_vectors(vec1, vec2)
+    summed_vectors = []
+
+    vec1.each_index do |i|
+      summed_vectors << vec1[i] + vec2[i]
+    end
+
+    summed_vectors
+  end
+
 end #end PIECE
 
 class Stepper < Piece
   def possible_moves
-    i, j = @position
     possible_moves = []
 
     self.move_deltas.each do |delta|
-      candidate = [delta[0] + i, delta[1] + j]
+      candidate = sum_vectors(@position, delta)
       possible_moves << candidate if self.available_square?(candidate, @color)
     end
 
@@ -49,11 +60,11 @@ class Slider < Piece
   def possible_moves
     possible_moves = []
 
-    self.move_deltas.each do |delta_i, delta_j|
+    self.move_deltas.each do |delta|
       candidate = @position
 
       loop do
-        candidate = [candidate[0] + delta_i, candidate[1] + delta_j]
+        candidate = sum_vectors(candidate, delta)
         possible_moves << candidate if self.available_square?(candidate, @color)
 
         break unless @board.on_board?(*candidate) && @board.empty?(*candidate)
@@ -94,13 +105,13 @@ class Queen < Slider
   end
 end
 
-class Pawn
+class Pawn < Piece
   def color_dir
     (@color == :white) ? -1 : 1
   end
 
   def possible_moves
-    forward_moves + attack_positions
+    (forward_moves + attack_positions).select { |pos| @board.on_board?(*pos) }
   end
 
   def forward_moves

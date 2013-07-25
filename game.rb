@@ -5,9 +5,13 @@ require "./exceptions"
 class Game
   attr_reader :current_player
   def initialize
-    @board = Board.new
+    @board = Board.default_board
     self.create_players
     @current_player = :white
+  end
+
+  def self.new_game
+    Game.new.play
   end
 
   def play
@@ -27,6 +31,7 @@ class Game
       puts "WHITE wins!"
     end
     puts @board
+    exit
   end
 
   def new_turn
@@ -35,6 +40,10 @@ class Game
         move = @white_player.make_move
       else
         move = @black_player.make_move
+      end
+
+      unless move.count == 2
+        raise IllegalMoveError.new("Enter a start and a destination square separated by a comma.")
       end
 
       origin, destination = move

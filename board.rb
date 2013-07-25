@@ -12,31 +12,14 @@ class Board
     "P" => Pawn
   }
 
-  ROWS = {
-    8 => 0,
-    7 => 1,
-    6 => 2,
-    5 => 3,
-    4 => 4,
-    3 => 5,
-    2 => 6,
-    1 => 7
-  }
-
-  COLS = {
-    'a' => 0,
-    'b' => 1,
-    'c' => 2,
-    'd' => 3,
-    'e' => 4,
-    'f' => 5,
-    'g' => 6,
-    'h' => 7
-  }
-
   def initialize
     @rows = Array.new(8) { Array.new(8) { nil } }
-    set_pieces
+  end
+
+  def self.default_board
+    board = Board.new
+    board.set_pieces
+    board
   end
 
   def [](i, j)
@@ -97,19 +80,35 @@ class Board
     pos.all? { |el| el.between?(0, 7) }
   end
 
+  def set_pieces
+    power_row = "RHBQKBHR".split("")
+
+    [[0, :black], [7, :white]].each do |row, color|
+      power_row.each_with_index do |piece, col|
+        self[row, col] = PIECES[piece].new(self, color)
+      end
+    end
+
+    [[1, :black], [6, :white]].each do |row, color|
+      8.times do |col|
+        self[row, col] = Pawn.new(self, color)
+      end
+    end
+  end
+
   def square(square)
     self[*translate_location(square)]
   end
 
   def to_s
-    @rows.each_with_index.map do |row, index|
-      row.map do |square|
+    @rows.each_with_index.map do |row, i|
+      row.each_with_index.map do |square, j|
         if square.nil?
           "   "
         else
           " #{square.to_s} "
         end
-      end.join("|") + "  #{8 - index}"
+      end.join("|") + "  #{8 - i}"
     end.join("\n--------------------------------\n") +
     "\n " + ("a".."h").to_a.join("   ")
   end
@@ -128,6 +127,7 @@ class Board
   end
 
   private
+
     def all_pieces
       @rows.flatten.compact
     end
@@ -139,22 +139,6 @@ class Board
 
     def opposite_color(color)
       color == :white ? :black : :white
-    end
-
-    def set_pieces
-      power_row = "RHBQKBHR".split("")
-
-      [[0, :black], [7, :white]].each do |row, color|
-        power_row.each_with_index do |piece, col|
-          self[row, col] = PIECES[piece].new(self, color)
-        end
-      end
-
-      [[1, :black], [6, :white]].each do |row, color|
-        8.times do |col|
-          self[row, col] = Pawn.new(self, color)
-        end
-      end
     end
 
     def team_legal_moves(color)
@@ -178,16 +162,16 @@ class Board
     end
 
     def translate_location(location)
-      row = ROWS[location[1].to_i]
-      col = COLS[location[0]]
+      rows = "87654321"
+      cols = "abcdefgh"
+
+      row = rows.split(//).find_index(location[1])
+      col = cols.split(//).find_index(location[0])
+
       unless row && col
         raise IllegalMoveError.new("Enter a move in the format ('a-h'), ('1-8').")
       end
+
       [row, col]
     end
-
-
 end
-
-
-
