@@ -1,4 +1,4 @@
-load "./piece.rb"
+require "./piece"
 require "./exceptions"
 
 

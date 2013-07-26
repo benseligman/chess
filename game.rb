@@ -1,5 +1,5 @@
-load "./board.rb"
-load "./player.rb"
+require "./board.rb"
+require "./player.rb"
 require "./exceptions"
 
 class Game
