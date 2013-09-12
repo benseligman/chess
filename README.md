@@ -1,7 +1,7 @@
 chess
 =====
 
-A CLI chess game to practice OOP. Most basic chess rules implemented. Outstanding:
+A CLI chess game. Most basic chess rules implemented. Features that haven't been implemented include:
 
  - pawn promotion
  - castling
